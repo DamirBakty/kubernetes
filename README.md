@@ -1,5 +1,4 @@
 # Django Site
-
 Докеризированный сайт на Django для экспериментов с Kubernetes.
 
 Внутри контейнера Django приложение запускается с помощью Nginx Unit, не путать с Nginx. Сервер Nginx Unit выполняет сразу две функции: как веб-сервер он раздаёт файлы статики и медиа, а в роли сервера-приложений он запускает Python и Django. Таким образом Nginx Unit заменяет собой связку из двух сервисов Nginx и Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
@@ -11,67 +10,112 @@
 - [Get Started with Docker](https://www.docker.com/get-started/)
 
 Вместе со свежей версией Docker к вам на компьютер автоматически будет установлен Docker Compose. Дальнейшие инструкции будут его активно использовать.
-
-## Как запустить сайт для локальной разработки
-
-Запустите базу данных и сайт:
+## Установка Minikube, VirtualBox и kubectl
+- Документацию по [minikube](https://minikube.sigs.k8s.io/docs/)
+- Документация по [kubectl](https://kubernetes.io/ru/docs/tasks/tools/install-kubectl/)
+- Документация по [VirtualBox](https://www.virtualbox.org/)
+- 
+## Запуск minikube
+```shell
+minikube start
+```
+## Получить IP адрес minikube
 
 ```shell
-$ docker compose up
+minikube ip
 ```
+Для изменения доступа к minikube по домену нужно следовать по этой [инструкции](https://help.reg.ru/support/dns-servery-i-nastroyka-zony/rabota-s-dns-serverami/fayl-hosts-gde-nakhoditsya-i-kak-yego-izmenit)
 
-В новом терминале, не выключая сайт, запустите несколько команд:
+## Как упаковать приложение для minikube
+
+Документация для использования терминала внутри minikube можете прочитать по [ссылке](https://minikube.sigs.k8s.io/docs/handbook/pushing/)
+
+После того как зашли внутри minikube, соберите проект в докер контейнер:
 
 ```shell
-$ docker compose run --rm web ./manage.py migrate  # создаём/обновляем таблицы в БД
-$ docker compose run --rm web ./manage.py createsuperuser  # создаём в БД учётку суперпользователя
-```
-
-Готово. Сайт будет доступен по адресу [http://127.0.0.1:8080](http://127.0.0.1:8080). Вход в админку находится по адресу [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
-
-## Как вести разработку
-
-Все файлы с кодом django смонтированы внутрь докер-контейнера, чтобы Nginx Unit сразу видел изменения в коде и не требовал постоянно пересборки докер-образа -- достаточно перезапустить сервисы Docker Compose.
-
-### Как обновить приложение из основного репозитория
-
-Чтобы обновить приложение до последней версии подтяните код из центрального окружения и пересоберите докер-образы:
-
-``` shell
-$ git pull
 $ docker compose build
 ```
 
-После обновлении кода из репозитория стоит также обновить и схему БД. Вместе с коммитом могли прилететь новые миграции схемы БД, и без них код не запустится.
+Запуск локального докер регистра:
+```shell
+docker run -d -p 5000:5000 --name registry registry:2
+```
 
-Чтобы не гадать заведётся код или нет — запускайте при каждом обновлении команду `migrate`. Если найдутся свежие миграции, то команда их применит:
+Добавить тэг контейнера Django приложение для локального регистра:
+```shell
+docker tag django_app:latest localhost:5000/django_app:latest
+```
+
+Загрузить контейнер Django приложение в локальный регистр:
 
 ```shell
-$ docker compose run --rm web ./manage.py migrate
-…
-Running migrations:
-  No migrations to apply.
+docker push localhost:5000/django_app:latest
 ```
 
-### Как добавить библиотеку в зависимости
+Теперь манифест файлы могут подтягивать контейнер Django с локального регистра для дальнейшей работы
 
-В качестве менеджера пакетов для образа с Django используется pip с файлом requirements.txt. Для установки новой библиотеки достаточно прописать её в файл requirements.txt и запустить сборку докер-образа:
-
-```sh
-$ docker compose build web
+## Установка базы данных через Helm
+```shell
+sudo snap install helm --classic
 ```
 
-Аналогичным образом можно удалять библиотеки из зависимостей.
+Установить и запустить pod с базой данных внутри minikube
 
-<a name="env-variables"></a>
-## Переменные окружения
+```shell
+helm install my-release oci://registry-1.docker.io/bitnamicharts/postgresql
+```
 
-Образ с Django считывает настройки из переменных окружения:
+Создать Базу данных внутри postgres pod:
 
-`SECRET_KEY` -- обязательная секретная настройка Django. Это соль для генерации хэшей. Значение может быть любым, важно лишь, чтобы оно никому не было известно. [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#secret-key).
+```shell
+kubectl get pods
+```
 
-`DEBUG` -- настройка Django для включения отладочного режима. Принимает значения `TRUE` или `FALSE`. [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-DEBUG).
+Находим pod postgres:
+![img.png](screens/postgres-pod.png)
 
-`ALLOWED_HOSTS` -- настройка Django со списком разрешённых адресов. Если запрос прилетит на другой адрес, то сайт ответит ошибкой 400. Можно перечислить несколько адресов через запятую, например `127.0.0.1,192.168.0.1,site.test`. [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#allowed-hosts).
+Получить IP адрес пода:
+```shell
+kubectl describe pods ${pod_name}
+```
 
-`DATABASE_URL` -- адрес для подключения к базе данных PostgreSQL. Другие СУБД сайт не поддерживает. [Формат записи](https://github.com/jacobian/dj-database-url#url-schema).
+Зайти в терминала запущеного пода:
+```shell
+kubectl exec -it ${pod_name} sh
+```
+
+Создать базу данных внутри пода можете посмотреть по [ссылке](https://www.atlassian.com/data/admin/create-a-user-with-psql)
+
+## Создание секрета для minikube
+Создаем .env файл и копируем содержимое из .env.example
+* SECRET_KEY = секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
+* DEBUG — дебаг-режим. Поставьте False.
+* ALLOWED_HOSTS — Доступные IP адреса и домены для Django, туда добавляем домен которого настроили внутри hosts
+* DATABASE_URL - ссылка для доступа в базу данных
+* * DB_USER - пользователь имеющий доступ к базе данных
+* * USER_PASSWORD - пароль пользователя
+* * DB_HOST - IP адрес запущенной базы данных
+* * DB_NAME - Имя базы данных
+
+Создаем secret:
+```shell
+kubectl create secret generic django-env --from-env-file=.env
+```
+
+# Запуск Проекта:
+```shell
+kubectl apply -f django-k8s.yaml
+```
+После запуска проверим состояние подов:
+```shell
+kubectl get pods
+```
+В терминале должно выйти следующая запись:
+![img.png](screens/pods.png)
+
+* clearsessions-cronjob - Cronjob для периодичского запуска Job для удаления устаревших сессий
+* * schedule: "0 0 * * 0" - ознанчает что Job будет запускать команду каждый день в 00:00
+* my-migrate-job - Job для применения миграции в базу данных
+* my-release-postgresql-0 - Pod базы данных
+* my-web-deployment-ingress - Podы в которых запущены наши Django контейнеры
+* * Ingress - позволяет перенаправлять запросы с star-burger.test между тремя репликами нашего пода

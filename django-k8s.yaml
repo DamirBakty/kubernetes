@@ -59,7 +59,7 @@ kind: CronJob
 metadata:
   name: clearsessions-cronjob
 spec:
-  schedule: "* * * * *"
+  schedule: "0 0 * * 0"
   startingDeadlineSeconds: 60
   jobTemplate:
     spec:
