@@ -52,7 +52,7 @@ docker tag django_app:latest localhost:5000/django_app:latest
 docker push localhost:5000/django_app:latest
 ```
 
-Теперь манифест файлы могут подтягивать контейнер Django с локального регистра для дальнейшей работы
+Теперь наши сервисы в kubernetes могут подтягивать контейнер Django с локального регистра для дальнейшей работы
 
 ## Установка базы данных через Helm
 ```shell
