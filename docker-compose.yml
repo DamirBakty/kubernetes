@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  web:
+    build: backend_main_django
+    image: django_app
+    volumes:
+      - ./backend_main_django:/code
+    env_file:
+      - .env
+    ports:
+      - 127.0.0.1:8080:80
