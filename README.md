@@ -102,14 +102,41 @@ kubectl exec -it ${pod_name} sh
 kubectl create secret generic django-env --from-env-file=.env
 ```
 
-# Запуск Проекта:
+# Запуск Проекта внутри minikube:
+Команда для запуска deployment, запускает 3 реплики контейнера Django проекта с названием проекта my-ingress
 ```shell
-kubectl apply -f django-k8s.yaml
+kubectl apply -f deployment.yaml
 ```
+
+Команда запускает service, под одним проектом my-ingress. Service нужен для открытия портов и load balancing.
+```shell
+kubectl apply -f service.yaml
+```
+
+Команда запускает ingress, под сервисом my-web-ingress. Позволяет перенаправлять HTTP запросы с star-burger.test к порту 80 с префиксом /
+
+```shell
+kubectl apply -f ingress.yaml
+```
+
+Команда запускает job, который будет выполнять команду миграции.
+
+```shell
+kubectl apply -f job.yaml
+```
+
+Команда запускает cronjob, для удаление устаревших сессий.
+
+```shell
+kubectl apply -f cronjob.yaml
+```
+
+
 После запуска проверим состояние подов:
 ```shell
 kubectl get pods
 ```
+
 В терминале должно выйти следующая запись:
 ![img.png](screens/pods.png)
 
