@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: edu-stoic-dubinsky
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: nginx
+    image: nginx

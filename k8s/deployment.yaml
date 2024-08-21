@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-web-deployment-ingress
+  labels:
+    app: my-k8s-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      project: my-ingress
+  template:
+    metadata:
+      labels:
+        project: my-ingress
+    spec:
+      containers:
+        - name: my-ingress-web
+          image: localhost:5000/django_app:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - secretRef:
+                name: django-env
