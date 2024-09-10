@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: edu-stoic-dubinsky
+  labels:
+    app: nginx
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: nginx
+    image: nginx
+    ports:
+      - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-loadbalancer
+  namespace: edu-stoic-dubinsky
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx
+  ports:
+    - name: http
+      nodePort: 30261
+      protocol: TCP
+      port: 80
+      targetPort: 80
