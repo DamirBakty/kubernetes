@@ -5,21 +5,9 @@ metadata:
   namespace: edu-stoic-dubinsky
 spec:
   volumes:
-    - name: secret-postgres
-      secret:
-        secretName: postgres
-    - name: root-cert
-      secret:
-        secretName: root-cert
-        items:
-          - key: root.crt
-            path: root.crt
     - name: pg-root-cert
       secret:
-        secretName: pg-root-cert
-        items:
-          - key: root.crt
-            path: root.crt
+        secretName: root-cert
   containers:
     - name: ubuntu-container
       image: ubuntu:22.04
@@ -32,9 +20,6 @@ spec:
           mkdir -p /root/.postgresql &&
           sleep 86400
       volumeMounts:
-        - name: secret-postgres
-          readOnly: true
-          mountPath: /root/.db
         - name: pg-root-cert
           mountPath: /root/.postgresql
           readOnly: true

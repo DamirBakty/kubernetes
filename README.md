@@ -186,3 +186,49 @@ kubectl get pods
 - Создаем кластер в Yandex Cloud
 - Создаем namespace
 - Создаем Service указывая порты для внутреннего пода и NodePort привязанный к домену
+
+# Подключение к защищённому PostgreSQL
+
+- Получаем сертификаты для подключения через SSL:
+
+```shell
+mkdir -p ~/.postgresql && \
+wget "https://storage.yandexcloud.net/cloud-certs/CA.pem" \
+     --output-document ~/.postgresql/root.crt && \
+chmod 0655 ~/.postgresql/root.crt
+```
+
+- получаем base64 hash значения SSL-сертификата:
+
+```shell
+ base64 -w 0 ~/.postgresql/root.crt
+```
+
+- Создаем secret из hash значения SSL-сертификата:
+-
+    - заменяем значение <base64-cert-value>
+-
+    - заменяем значения остальных данных для подключения к PostgreSQL
+
+```shell
+kubectl apply -f ./k8s-dev/ssl_secret.yaml
+```
+
+- Запускаем под ubuntu:
+
+```shell
+kubectl apply -f ./k8s-dev/ubuntu-pod.yaml
+```
+
+- [Инструкция по подключению к запущенному контейнеру](https://kubernetes.io/docs/tasks/debug/debug-application/get-shell-running-container/)
+
+- Подключение к защищённому PostgreSQL:
+
+```shell
+psql "host=$(cat ~/.postgresql/host) \
+      port=$(cat ~/.postgresql/port) \
+      sslmode=verify-full \
+      dbname=$(cat ~/.postgresql/name) \
+      user=$(cat ~/.postgresql/username) \
+      target_session_attrs=read-write"
+```
