@@ -1,22 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-web-deployment-ingress
+  name: django-deployment
+  namespace: <namespace>
   labels:
-    app: my-k8s-deployment
+    app: django
+    app.kubernetes.io/name: django
+    app.kubernetes.io/instance: django-deploy
+    app.kubernetes.io/version: "1.0"
 spec:
   replicas: 3
   selector:
     matchLabels:
-      project: my-ingress
+      app: django
   template:
     metadata:
       labels:
-        project: my-ingress
+        app: django
+        app.kubernetes.io/name: django
+        app.kubernetes.io/instance: django-deploy
+        app.kubernetes.io/version: "1.0"
     spec:
       containers:
-        - name: my-ingress-web
-          image: localhost:5000/django_app:latest
+        - name: django
+          image: ultimate1465/django_app:a201b435a6cb31a42067c20df8bbecc2f0c11ac0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
           envFrom:

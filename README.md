@@ -135,32 +135,25 @@ kubectl create secret generic django-env --from-env-file=.env
 Команда для запуска deployment, запускает 3 реплики контейнера Django проекта с названием проекта my-ingress
 
 ```shell
-kubectl apply -f deployment.yaml
+kubectl apply -f /path/to/deployment.yaml
 ```
 
 Команда запускает service, под одним проектом my-ingress. Service нужен для открытия портов и load balancing.
 
 ```shell
-kubectl apply -f service.yaml
-```
-
-Команда запускает ingress, под сервисом my-web-ingress. Позволяет перенаправлять HTTP запросы с star-burger.test к порту
-80 с префиксом /
-
-```shell
-kubectl apply -f ingress.yaml
+kubectl apply -f /path/to/service.yaml
 ```
 
 Команда запускает job, который будет выполнять команду миграции.
 
 ```shell
-kubectl apply -f job.yaml
+kubectl apply -f /path/to/job.yaml
 ```
 
 Команда запускает cronjob, для удаление устаревших сессий.
 
 ```shell
-kubectl apply -f cronjob.yaml
+kubectl apply -f /path/to/cronjob.yaml
 ```
 
 После запуска проверим состояние подов:
@@ -246,3 +239,37 @@ docker login
 ```shell 
 docker tag <container_local_name>:<container_local_tag> <username>/<container_dockerhub_name>:<container_dockerhub_tag>
 ```
+
+# Готовим запуск внутри кластера Yandex Cloud
+- Получаем хэш значения для:
+- - ALLOWED_HOSTS
+- - DATABASE_URL
+- - SECRET_KEY
+- - DEBUG
+
+- Заменяем значения внутри файла django_secrets.yaml
+```shell
+kubectl apply -f /path/to/django_secrets.yaml
+```
+
+- Создаем Deployment
+```shell
+kubectl create -f /path/to/deployment.yaml
+```
+
+- Создаем Service
+```shell
+kubectl create -f /path/to/service.yaml
+```
+
+- Запускаем Job для миграции
+```shell
+kubectl create -f /path/to/job.yaml
+```
+
+- Создаем CronJob для чистки устаревших сессий
+```shell
+kubectl create -f /path/to/cronjob.yaml
+```
+
+Сайт доступен по [ссылке](https://edu-stoic-dubinsky.sirius-k8s.dvmn.org/)
