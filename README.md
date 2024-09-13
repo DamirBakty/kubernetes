@@ -232,3 +232,17 @@ psql "host=$(cat ~/.postgresql/host) \
       user=$(cat ~/.postgresql/username) \
       target_session_attrs=read-write"
 ```
+
+# Инструкция по сборке приложения Django
+
+- Скачаем код из [репозитория](https://github.com/devmanorg/k8s-test-django) и собираем образ по инструкции.
+- Заходим в dockerhub аккаунт через командную строку
+
+```shell
+docker login
+```
+
+- Готовим образ для Dockerhub:
+```shell 
+docker tag <container_local_name>:<container_local_tag> <username>/<container_dockerhub_name>:<container_dockerhub_tag>
+```
