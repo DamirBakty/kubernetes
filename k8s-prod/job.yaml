@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate-job
+  namespace: <namespace>
+spec:
+  template:
+    spec:
+      containers:
+        - name: my-migrate
+          image: ultimate1465/django_app:a201b435a6cb31a42067c20df8bbecc2f0c11ac0
+          imagePullPolicy: IfNotPresent
+          command: [ "python", "manage.py", "migrate", "--noinput" ]
+          envFrom:
+            - secretRef:
+                name: django-env
+      restartPolicy: OnFailure
+  backoffLimit: 4
